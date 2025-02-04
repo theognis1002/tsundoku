@@ -1,0 +1,42 @@
+.upload-paper {
+  padding: 24px;
+  max-width: 600px;
+  width: 100%;
+  background-color: var(--mui-palette-background-paper);
+}
+
+.upload-dropzone {
+  border: 2px dashed;
+  border-color: var(--mui-palette-grey-300);
+  border-radius: 4px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.upload-dropzone:hover {
+  background-color: var(--mui-palette-action-hover);
+}
+
+.upload-icon {
+  font-size: 40px;
+  color: var(--mui-palette-text-secondary);
+  margin-bottom: 8px;
+}
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--mui-palette-action-hover);
+  border-radius: 4px;
+}
+
+.upload-button {
+  margin-top: 16px;
+}
+
+.status-alert {
+  margin-top: 16px;
+}

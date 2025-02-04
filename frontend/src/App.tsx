@@ -1,52 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import tsundokuLogo from "./assets/logo.png";
+import { UploadForm } from "./components/UploadForm";
+import "./App.css";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+
+const theme = createTheme({});
 
 function App() {
-  const [count, setCount] = useState(0)
-
   const fetchData = () => {
     fetch(`http://localhost:${import.meta.env.VITE_PORT}/`)
-      .then(response => response.text())
-      .then(data => setMessage(data))
-      .catch(error => console.error('Error fetching data:', error))
-  }
-  const [message, setMessage] = useState<string>('')
+      .then((response) => response.text())
+      .catch((error) => console.error("Error fetching data:", error));
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <button onClick={fetchData}>
-        Click to fetch from Go server
-      </button>
-      {message && (
-        <div>
-          <h2>Server Response:</h2>
-          <p>{message}</p>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <a href="/">
+            <img
+              src={tsundokuLogo}
+              className="logo"
+              alt="tsundoku logo"
+              style={{ width: "12rem", height: "auto" }}
+            />
+          </a>
+          <h1 style={{ fontFamily: "Rampart One, sans-serif" }}>
+            tsundoku (積ん読)
+          </h1>
+          <p
+            style={{
+              color: "#6B7280",
+              marginTop: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            n. the phenomenon of acquiring books but letting them pile up in
+            one's home without reading them
+          </p>
         </div>
-      )}
-    </>
-  )
+
+        <UploadForm onUploadSuccess={fetchData} />
+      </div>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
