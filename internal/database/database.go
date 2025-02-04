@@ -113,3 +113,13 @@ func (s *service) Close() error {
 	log.Printf("Disconnected from database: %s", database)
 	return s.db.Close()
 }
+
+type DB struct {
+	// Add your database fields here
+}
+
+func (db *DB) Health() map[string]string {
+	return map[string]string{
+		"status": "ok",
+	}
+}

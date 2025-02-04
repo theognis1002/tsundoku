@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"tsundoku/internal/database"
 	"tsundoku/internal/server"
 )
 
@@ -37,8 +38,8 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
-
-	server := server.NewServer()
+	db := database.New()
+	server := server.NewServer(db)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

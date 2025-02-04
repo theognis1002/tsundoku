@@ -1,39 +1,35 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
-	"os"
-	"strconv"
-	"time"
-
-	_ "github.com/joho/godotenv/autoload"
 
 	"tsundoku/internal/database"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	port int
-
-	db database.Service
+	router *gin.Engine
+	db     database.Service
 }
 
-func NewServer() *http.Server {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	NewServer := &Server{
-		port: port,
-
-		db: database.New(),
+func NewServer(db database.Service) *http.Server {
+	s := &Server{
+		router: gin.Default(),
+		db:     db,
 	}
+	s.routes()
 
-	// Declare Server config
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
-		Handler:      NewServer.RegisterRoutes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	return &http.Server{
+		Addr:    ":8080",
+		Handler: s.router,
 	}
+}
 
-	return server
+func (s *Server) HelloWorld1Handler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "Hello World"})
+}
+
+func (s *Server) routes() {
+	s.router.GET("/", s.HelloWorldHandler)
 }

@@ -1,26 +1,24 @@
-# Simple Makefile for a Go project
-
 # Build the application
 all: build test
 
 build:
 	@echo "Building..."
-	
-	
 	@go build -o main cmd/api/main.go
+	@echo "Build successful"
 
 # Run the application
 run:
 	@go run cmd/api/main.go &
 	@npm install --prefer-offline --no-fund --prefix ./frontend
 	@npm run dev --prefix ./frontend
+
 # Create DB container
 docker-run:
 	@if docker compose up --build 2>/dev/null; then \
 		: ; \
 	else \
 		echo "Falling back to Docker Compose V1"; \
-		docker-compose up --build; \
+		docker compose up --build; \
 	fi
 
 # Shutdown DB container
@@ -29,13 +27,14 @@ docker-down:
 		: ; \
 	else \
 		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
+		docker compose down; \
 	fi
 
 # Test the application
 test:
 	@echo "Testing..."
 	@go test ./... -v
+
 # Integrations Tests for the application
 itest:
 	@echo "Running integration tests..."
@@ -62,5 +61,12 @@ watch:
                 exit 1; \
             fi; \
         fi
+
+# Destroy the application
+destroy:
+	@echo "Destroying..."
+	@docker compose down
+	@docker system prune -af --volumes
+	@echo "Destroyed"
 
 .PHONY: all build run test clean watch docker-run docker-down itest
