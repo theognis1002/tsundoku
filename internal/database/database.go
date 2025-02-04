@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -22,6 +23,9 @@ type Service interface {
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
+
+	// SaveFile saves a file to the database.
+	SaveFile(filename string, contentType string, file io.Reader) error
 }
 
 type service struct {
@@ -29,17 +33,16 @@ type service struct {
 }
 
 var (
-	database   = os.Getenv("BLUEPRINT_DB_DATABASE")
-	password   = os.Getenv("BLUEPRINT_DB_PASSWORD")
-	username   = os.Getenv("BLUEPRINT_DB_USERNAME")
-	port       = os.Getenv("BLUEPRINT_DB_PORT")
-	host       = os.Getenv("BLUEPRINT_DB_HOST")
-	schema     = os.Getenv("BLUEPRINT_DB_SCHEMA")
+	database   = os.Getenv("POSTGRES_DATABASE")
+	password   = os.Getenv("POSTGRES_PASSWORD")
+	username   = os.Getenv("POSTGRES_USERNAME")
+	port       = os.Getenv("POSTGRES_PORT")
+	host       = os.Getenv("POSTGRES_HOST")
+	schema     = os.Getenv("POSTGRES_SCHEMA")
 	dbInstance *service
 )
 
 func New() Service {
-	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
 	}
@@ -115,11 +118,30 @@ func (s *service) Close() error {
 }
 
 type DB struct {
-	// Add your database fields here
 }
 
 func (db *DB) Health() map[string]string {
 	return map[string]string{
 		"status": "ok",
 	}
+}
+
+func (s *service) SaveFile(filename string, contentType string, file io.Reader) error {
+	// Read the file content into a byte slice
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("failed to read file content: %w", err)
+	}
+
+	// Insert into database
+	query := `
+		INSERT INTO documents (filename, content_type, content)
+		VALUES ($1, $2, $3)
+	`
+	_, err = s.db.Exec(query, filename, contentType, content)
+	if err != nil {
+		return fmt.Errorf("failed to insert file into database: %w", err)
+	}
+
+	return nil
 }

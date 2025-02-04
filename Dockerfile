@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS build
+FROM golang:1.22-alpine AS build
 
 WORKDIR /app
 
@@ -7,14 +7,13 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o main cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main cmd/api/main.go
 
-FROM alpine:3.20.1 AS prod
+FROM alpine:latest AS prod
 WORKDIR /app
 COPY --from=build /app/main /app/main
 EXPOSE ${PORT}
 CMD ["./main"]
-
 
 FROM node:20 AS frontend_builder
 WORKDIR /frontend
@@ -24,7 +23,7 @@ RUN npm install
 COPY frontend/. .
 RUN npm run build
 
-FROM node:23-slim AS frontend
+FROM node:20-slim AS frontend
 RUN npm install -g serve
 COPY --from=frontend_builder /frontend/dist /app/dist
 EXPOSE 5173

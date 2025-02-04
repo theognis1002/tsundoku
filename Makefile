@@ -1,3 +1,5 @@
+.PHONY: all build run test clean watch docker-run docker-down itest migrate db
+
 # Build the application
 all: build test
 
@@ -8,6 +10,7 @@ build:
 
 # Run the application
 run:
+	@make db
 	@go run cmd/api/main.go &
 	@npm install --prefer-offline --no-fund --prefix ./frontend
 	@npm run dev --prefix ./frontend
@@ -20,6 +23,12 @@ docker-run:
 		echo "Falling back to Docker Compose V1"; \
 		docker compose up --build; \
 	fi
+	
+
+db:
+	@echo "Running DB container..."
+	@docker compose up -d postgres
+	@make migrate
 
 # Shutdown DB container
 docker-down:
@@ -65,8 +74,16 @@ watch:
 # Destroy the application
 destroy:
 	@echo "Destroying..."
-	@docker compose down
+	@docker compose down -v --rmi all
 	@docker system prune -af --volumes
 	@echo "Destroyed"
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+migrate:
+	@echo "Running migrations..."
+	@if [ -f .env ]; then \
+		set -a; source .env; set +a; \
+		migrate -path internal/database/migrations -database "postgresql://$$POSTGRES_USERNAME:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DATABASE?sslmode=disable" up; \
+	else \
+		echo "Error: .env file not found"; \
+		exit 1; \
+	fi
