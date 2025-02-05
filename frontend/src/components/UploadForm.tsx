@@ -53,12 +53,25 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
         onUploadSuccess?.();
+
+        // Clear the status message after 30 seconds
+        setTimeout(() => {
+          setUploadStatus("");
+        }, 30000);
       } else {
-        setUploadStatus("Upload failed");
+        setUploadStatus("Upload failed!");
+        // Clear error message after 30 seconds
+        setTimeout(() => {
+          setUploadStatus("");
+        }, 30000);
       }
     } catch (error) {
-      setUploadStatus("Error uploading file");
+      setUploadStatus("Error uploading file!");
       console.error("Upload error:", error);
+      // Clear error message after 30 seconds
+      setTimeout(() => {
+        setUploadStatus("");
+      }, 30000);
     }
   };
 
