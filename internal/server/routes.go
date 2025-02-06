@@ -63,11 +63,17 @@ func (s *Server) uploadHandler(c *gin.Context) {
 	if file.Header.Get("Content-Type") == "application/pdf" {
 		resultChan := make(chan error)
 		go func() {
-			resultChan <- s.processPDF(fileContent, file.Filename)
+			resultChan <- s.db.SaveFile(file.Filename, file.Header.Get("Content-Type"), fileContent)
 		}()
 
 		if err := <-resultChan; err != nil {
 			log.Printf("Error processing file: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	} else if file.Header.Get("Content-Type") == "application/epub+zip" {
+		if err := ProcessEpub(file.Filename); err != nil {
+			log.Printf("Error processing EPUB: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -85,8 +91,8 @@ func (s *Server) uploadHandler(c *gin.Context) {
 // validateFileType checks if the uploaded file type is supported
 func (s *Server) validateFileType(file *multipart.FileHeader) error {
 	contentType := file.Header.Get("Content-Type")
-	if contentType != "application/pdf" && contentType != "text/plain" {
-		return fmt.Errorf("only PDF and TXT files are allowed")
+	if contentType != "application/pdf" && contentType != "application/epub+zip" {
+		return fmt.Errorf("only PDF and EPUB files are allowed")
 	}
 	return nil
 }

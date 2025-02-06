@@ -25,12 +25,12 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
       const selectedFile = e.target.files[0];
       if (
         selectedFile.type === "application/pdf" ||
-        selectedFile.type === "text/plain"
+        selectedFile.type === "application/epub+zip"
       ) {
         setFile(selectedFile);
         setUploadStatus("");
       } else {
-        setUploadStatus("Please select a PDF or TXT file");
+        setUploadStatus("Please select a PDF or EPUB file");
         setFile(null);
       }
     }
@@ -85,7 +85,7 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         <Box className="upload-dropzone" component="label">
           <input
             type="file"
-            accept=".pdf,.txt"
+            accept=".pdf,.epub"
             onChange={handleFileChange}
             style={{ display: "none" }}
           />
@@ -94,7 +94,7 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
             Click to upload or drag and drop
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            PDF or TXT files only
+            PDF or EPUB files only
           </Typography>
         </Box>
 

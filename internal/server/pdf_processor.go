@@ -1,108 +1,40 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log"
-	"os"
 
-	"github.com/dslipak/pdf"
+	"github.com/taylorskalyo/goreader/epub"
 )
 
-// processPDF handles PDF file processing and text extraction
-func (s *Server) processPDF(fileContent io.Reader, filename string) error {
-	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, fileContent); err != nil {
-		return fmt.Errorf("failed to copy file content: %v", err)
-	}
-
-	tmpFile, err := createTempPDFFile(buf.Bytes())
+// ProcessEpub reads an EPUB file and prints all chapter titles
+func ProcessEpub(filePath string) error {
+	book, err := epub.OpenReader(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open EPUB: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer book.Close()
 
-	if err := extractPDFText(tmpFile.Name()); err != nil {
-		return err
-	}
+	log.Printf("Book Title: %s\n", book.Rootfiles[0].Title)
+	log.Printf("Book Author: %s\n", book.Rootfiles[0].Creator)
+	log.Printf("Book Language: %s\n", book.Rootfiles[0].Language)
+	log.Printf("Book Identifier: %s\n", book.Rootfiles[0].Identifier)
+	log.Printf("Book Description: %s\n", book.Rootfiles[0].Description)
+	log.Printf("Book Subject: %s\n", book.Rootfiles[0].Subject)
+	log.Printf("Book Contributor: %s\n", book.Rootfiles[0].Contributor)
+	// Print out spine items which represent the reading order
+	log.Println("\nChapters/Sections in Reading Order:")
 
-	return s.db.SaveFile(filename, "application/pdf", bytes.NewReader(buf.Bytes()))
-}
-
-// createTempPDFFile creates a temporary file with the given content
-func createTempPDFFile(content []byte) (*os.File, error) {
-	tmpFile, err := os.CreateTemp("", "pdf-*.pdf")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %v", err)
-	}
-
-	if _, err := tmpFile.Write(content); err != nil {
-		os.Remove(tmpFile.Name())
-		return nil, fmt.Errorf("failed to write temp file: %v", err)
-	}
-
-	return tmpFile, nil
-}
-
-// extractPDFText extracts and processes text from a PDF file
-func extractPDFText(filepath string) error {
-	r, err := pdf.Open(filepath)
-	if err != nil {
-		return fmt.Errorf("failed to open PDF: %v", err)
-	}
-
-	for pageIndex := 1; pageIndex <= r.NumPage(); pageIndex++ {
-		if err := processPage(r.Page(pageIndex)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// processPage extracts text from a single PDF page
-func processPage(p pdf.Page) error {
-	if p.V.IsNull() {
-		return nil
-	}
-
-	texts := p.Content().Text
-	var lastText pdf.Text
-	var word string
-
-	for _, text := range texts {
-		if isSameWord(lastText, text) {
-			word += text.S
-		} else {
-			if word != "" {
-				log.Printf("Text: %s\nFont: %s\nFontSize: %.2f\nX: %.2f\nY: %.2f\nWidth: %.2f\n",
-					word,
-					lastText.Font,
-					lastText.FontSize,
-					lastText.X,
-					lastText.Y,
-					lastText.W,
-				)
+	spine := book.Rootfiles[0].Spine
+	for i, itemref := range spine.Itemrefs {
+		// Find the manifest item that matches this itemref
+		for _, item := range book.Rootfiles[0].Manifest.Items {
+			if item.ID == itemref.IDREF {
+				log.Printf("Chapter %d: %s\n", i+1, item.HREF)
+				break
 			}
-			word = text.S
 		}
-		lastText = text
 	}
 
-	if word != "" {
-		log.Printf("Text: %s\nFont: %s\nFontSize: %.2f\nX: %.2f\nY: %.2f\nWidth: %.2f",
-			word,
-			lastText.Font,
-			lastText.FontSize,
-			lastText.X,
-			lastText.Y,
-			lastText.W,
-		)
-	}
 	return nil
-}
-
-// isSameWord checks if two text elements are part of the same word
-func isSameWord(last, current pdf.Text) bool {
-	return last.Y == current.Y && (current.X-(last.X+last.W)) < 20
 }
