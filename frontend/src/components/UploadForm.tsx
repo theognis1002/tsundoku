@@ -1,5 +1,13 @@
 import { ChangeEvent, useState } from "react";
-import { Box, Button, Paper, Typography, Alert, Stack } from "@mui/material";
+import {
+  Box,
+  Button,
+  Paper,
+  Typography,
+  Alert,
+  Stack,
+  LinearProgress,
+} from "@mui/material";
 import { UploadFile, Description } from "@mui/icons-material";
 import "./UploadForm.css";
 
@@ -10,6 +18,7 @@ interface UploadFormProps {
 export function UploadForm({ onUploadSuccess }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -33,6 +42,7 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
       return;
     }
 
+    setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
 
@@ -45,6 +55,7 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         }
       );
 
+      setIsUploading(false);
       if (response.ok) {
         setUploadStatus("File uploaded successfully!");
         setFile(null);
@@ -53,26 +64,19 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
         onUploadSuccess?.();
-
-        // Clear the status message after 30 seconds
-        setTimeout(() => {
-          setUploadStatus("");
-        }, 30000);
       } else {
         setUploadStatus("Upload failed!");
-        // Clear error message after 30 seconds
-        setTimeout(() => {
-          setUploadStatus("");
-        }, 30000);
       }
     } catch (error) {
+      setIsUploading(false);
       setUploadStatus("Error uploading file!");
       console.error("Upload error:", error);
-      // Clear error message after 30 seconds
-      setTimeout(() => {
-        setUploadStatus("");
-      }, 30000);
     }
+
+    // Clear status message after 30 seconds
+    setTimeout(() => {
+      setUploadStatus("");
+    }, 30000);
   };
 
   return (
@@ -106,11 +110,17 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         <Button
           variant="contained"
           onClick={handleUpload}
-          disabled={!file}
+          disabled={!file || isUploading}
           className="upload-button"
         >
-          Upload
+          {isUploading ? "Uploading..." : "Upload"}
         </Button>
+
+        {isUploading && (
+          <Box sx={{ width: "100%" }}>
+            <LinearProgress />
+          </Box>
+        )}
 
         {uploadStatus && (
           <Alert
