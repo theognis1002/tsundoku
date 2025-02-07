@@ -1,24 +1,22 @@
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from internal.server.database import get_db
 
 from .controllers.upload_controller import UploadController
-from .schemas import UploadResponse
 
 router = APIRouter()
 
 
-@router.post("/upload", response_model=UploadResponse)
-async def upload_epub(file: UploadFile = File(...)) -> UploadResponse:
-    """
-    Handle POST request for EPUB file upload and extract chapter names
-
-    Args:
-        file: The uploaded EPUB file
-
-    Returns:
-        UploadResponse: Response containing upload status, details and chapter names
-    """
-    success, filename, error, chapters = await UploadController.handle_epub_upload(file)
-
-    return UploadResponse(
-        success=success, filename=filename, error=error, chapters=chapters
+@router.post("/upload")
+async def upload_file(file: UploadFile, db: Session = Depends(get_db)) -> dict:
+    success, filename, error, chapters = await UploadController.handle_epub_upload(
+        file, db
     )
+    if not success:
+        raise HTTPException(status_code=400, detail=error)
+    return {
+        "message": "File uploaded successfully",
+        "filename": filename,
+        "chapters": chapters,
+    }

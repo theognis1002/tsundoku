@@ -1,9 +1,15 @@
 import asyncio
+import logging
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 from ebooklib import epub
 from fastapi import UploadFile
+from sqlalchemy.orm import Session
+
+from internal.server.models.book import Book, Chapter
+
+logger = logging.getLogger(__name__)
 
 
 class UploadController:
@@ -54,15 +60,40 @@ class UploadController:
         # Run CPU-intensive work in a thread pool and await the result
         return await asyncio.to_thread(_extract_chapters)
 
+    @staticmethod
+    async def save_book_data(filename: str, chapters: list[str], db: Session) -> Book:
+        """Save book and chapter data to database"""
+        # Create book record
+        book = Book(
+            title=filename,
+            file_path=str(UploadController.UPLOAD_DIR / filename),
+        )
+        db.add(book)
+        db.flush()  # Get the book ID
+
+        # Create chapter records
+        for index, chapter_title in enumerate(chapters):
+            chapter = Chapter(
+                book_id=book.id,
+                title=chapter_title,
+                order=index + 1,  # 1-based ordering
+            )
+            db.add(chapter)
+
+        db.commit()
+        logger.info(f"Book and chapters saved for {filename}")
+        return book
+
     @classmethod
     async def handle_epub_upload(
-        cls, file: UploadFile
+        cls, file: UploadFile, db: Session
     ) -> tuple[bool, str, str | None, list[str]]:
         """
         Handle the upload of an EPUB file and extract chapter names
 
         Args:
             file: The uploaded file
+            db: Database session
 
         Returns:
             tuple: (success status, filename, optional error message, chapter names)
@@ -92,6 +123,9 @@ class UploadController:
 
             # Extract chapter names asynchronously
             chapters = await cls.extract_chapter_names(file_path)
+
+            # Save to database
+            await cls.save_book_data(file.filename, chapters, db)
 
             return True, file.filename, None, chapters
 

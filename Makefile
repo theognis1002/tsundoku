@@ -1,4 +1,4 @@
-.PHONY: all build run test clean watch docker-run docker-down itest migrate db
+.PHONY: all build run test clean stop migrate db
 
 # Create DB container
 run:
@@ -14,6 +14,16 @@ db:
 	@echo "Running DB container..."
 	@docker compose up -d postgres
 	@make migrate
+
+# Run database migrations
+migrate:
+	@echo "Running database migrations..."
+	@alembic upgrade head
+
+# Create new database migration
+migrations:
+	@echo "Creating new migration..."
+	@alembic revision --autogenerate
 
 # Shutdown DB container
 stop:
