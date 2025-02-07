@@ -1,0 +1,9 @@
+pre-commit
+isort
+ruff
+pyupgrade
+autoflake
+mypy
+pydantic
+fastapi
+sqlalchemy[mypy]

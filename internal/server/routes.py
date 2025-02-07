@@ -17,9 +17,8 @@ async def upload_epub(file: UploadFile = File(...)) -> UploadResponse:
     Returns:
         UploadResponse: Response containing upload status, details and chapter names
     """
-    success, filename, message, chapters = await UploadController.handle_epub_upload(
-        file
-    )
+    success, filename, error, chapters = await UploadController.handle_epub_upload(file)
+
     return UploadResponse(
-        filename=filename, success=success, message=message, chapters=chapters
+        success=success, filename=filename, error=error, chapters=chapters
     )
