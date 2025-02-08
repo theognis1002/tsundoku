@@ -10,15 +10,24 @@ import {
 } from "@mui/material";
 import { UploadFile, Description } from "@mui/icons-material";
 import "./UploadForm.css";
+import { useNavigate } from "react-router-dom";
 
 interface UploadFormProps {
   onUploadSuccess?: () => void;
+}
+
+interface UploadResponse {
+  message: string;
+  filename: string;
+  chapters: string[];
+  book_id: number;
 }
 
 export function UploadForm({ onUploadSuccess }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate();
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -57,6 +66,7 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
       setIsUploading(false);
       if (response.ok) {
+        const data: UploadResponse = await response.json();
         setUploadStatus("File uploaded successfully!");
         setFile(null);
         const fileInput = document.querySelector(
@@ -64,6 +74,7 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
         onUploadSuccess?.();
+        navigate(`/reader/${data.book_id}`);
       } else {
         setUploadStatus("Upload failed!");
       }

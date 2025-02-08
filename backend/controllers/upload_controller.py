@@ -87,7 +87,7 @@ class UploadController:
     @classmethod
     async def handle_epub_upload(
         cls, file: UploadFile, db: Session
-    ) -> tuple[bool, str, str | None, list[str]]:
+    ) -> tuple[bool, str, str | None, list[str], int | None]:
         """
         Handle the upload of an EPUB file and extract chapter names
 
@@ -96,11 +96,11 @@ class UploadController:
             db: Database session
 
         Returns:
-            tuple: (success status, filename, optional error message, chapter names)
+            tuple: (success status, filename, optional error message, chapter names, book_id)
         """
         try:
             if file.filename is None:
-                return False, "unknown", "No filename provided", []
+                return False, "unknown", "No filename provided", [], None
 
             # Create upload directory if it doesn't exist
             cls.UPLOAD_DIR.mkdir(exist_ok=True)
@@ -112,6 +112,7 @@ class UploadController:
                     file.filename,
                     "Invalid file type. Only EPUB files are allowed.",
                     [],
+                    None,
                 )
 
             # Save the file
@@ -125,9 +126,9 @@ class UploadController:
             chapters = await cls.extract_chapter_names(file_path)
 
             # Save to database
-            await cls.save_book_data(file.filename, chapters, db)
+            book = await cls.save_book_data(file.filename, chapters, db)
 
-            return True, file.filename, None, chapters
+            return True, file.filename, None, chapters, book.id
 
         except Exception as e:
             return (
@@ -135,4 +136,5 @@ class UploadController:
                 str(file.filename or "unknown"),
                 f"Error uploading file: {str(e)}",
                 [],
+                None,
             )
