@@ -8,7 +8,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## MakeFile Commands
 
-Start the application with Docker Compose:
+Build the application:
+
+```bash
+make build
+```
+
+Start the application:
 
 ```bash
 make run
@@ -31,5 +37,3 @@ Completely destroy all containers, volumes, and images:
 ```bash
 make destroy
 ```
-
-Note: The system will automatically fall back to Docker Compose V1 syntax if V2 is not available.

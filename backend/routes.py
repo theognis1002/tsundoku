@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from internal.server.database import get_db
+from backend.database import get_db
 
 from .controllers.upload_controller import UploadController
 

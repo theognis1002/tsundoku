@@ -2,14 +2,15 @@
 
 # Create DB container
 run:
-	@if docker compose up --build 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker compose up --build; \
-	fi
-	
+	@echo "Starting services..."
+	docker compose up
 
+# Shutdown DB containers
+stop:
+	@echo "Stopping services..."
+	docker compose down
+
+# Run DB container
 db:
 	@echo "Running DB container..."
 	@docker compose up -d postgres
@@ -18,21 +19,22 @@ db:
 # Run database migrations
 migrate:
 	@echo "Running database migrations..."
-	@alembic upgrade head
+	@docker compose exec app alembic upgrade head
 
 # Create new database migration
 migrations:
 	@echo "Creating new migration..."
-	@alembic revision --autogenerate
+	@docker compose exec backend alembic revision --autogenerate
 
-# Shutdown DB container
-stop:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker compose down; \
-	fi
+# Build the backend
+backend-build:
+	@echo "Building backend..."
+	docker compose build
+
+# Build the application
+build: backend-build migrate
+	@echo "Build completed."
+
 
 # Destroy the application
 destroy:
@@ -40,3 +42,8 @@ destroy:
 	@docker compose down -v --rmi all
 	@docker system prune -af --volumes
 	@echo "Destroyed"
+
+# Rebuild the application
+rebuild: destroy build
+	@echo "Rebuilding the application..."
+r: rebuild

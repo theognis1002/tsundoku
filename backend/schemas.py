@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic import BaseModel
 
 
@@ -8,5 +6,5 @@ class UploadResponse(BaseModel):
 
     filename: str
     success: bool
-    message: Optional[str] = None
-    chapters: List[str] = []
+    message: str | None = None
+    chapters: list[str] = []

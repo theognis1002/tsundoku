@@ -14,6 +14,7 @@ Here are some best practices and rules you must follow:
 - You use fastapi-cache for caching
 - You use fastapi-limiter for rate limiting
 - You use fastapi-pagination for pagination
+- Use `docker compose` CLI command
 
 1. **Use Meaningful Names**: Choose descriptive variable, function, and class names.
 2. **Follow PEP 8**: Adhere to the Python Enhancement Proposal 8 style guide for formatting.

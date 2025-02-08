@@ -1,10 +1,14 @@
 import os
+import sys
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from internal.server.database import Base
+# Add the project root directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.database import Base
 
 # Get DB URL from environment
 config = context.config

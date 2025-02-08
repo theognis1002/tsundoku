@@ -7,7 +7,7 @@ from ebooklib import epub
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-from internal.server.models.book import Book, Chapter
+from backend.models.book import Book, Chapter
 
 logger = logging.getLogger(__name__)
 
