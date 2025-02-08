@@ -47,3 +47,8 @@ destroy:
 rebuild: destroy build
 	@echo "Rebuilding the application..."
 r: rebuild
+
+
+shell:
+	@echo "Starting IPython shell..."
+	@docker compose exec app python backend/shell.py

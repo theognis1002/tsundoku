@@ -34,6 +34,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
+      - GROQ_API_KEY=${GROQ_API_KEY}
     volumes:
       - .:/app
     depends_on:

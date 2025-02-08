@@ -63,20 +63,19 @@ class UploadController:
     @staticmethod
     async def save_book_data(filename: str, chapters: list[str], db: Session) -> Book:
         """Save book and chapter data to database"""
-        # Create book record
         book = Book(
             title=filename,
             file_path=str(UploadController.UPLOAD_DIR / filename),
         )
         db.add(book)
-        db.flush()  # Get the book ID
+        db.flush()
 
-        # Create chapter records
+        # Create chapter records (titles only)
         for index, chapter_title in enumerate(chapters):
             chapter = Chapter(
                 book_id=book.id,
                 title=chapter_title,
-                order=index + 1,  # 1-based ordering
+                order=index + 1,
             )
             db.add(chapter)
 

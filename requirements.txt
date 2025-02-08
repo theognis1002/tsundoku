@@ -8,6 +8,7 @@ fastapi==0.115.8
 groq==0.18.0
 h11==0.14.0
 idna==3.10
+ipython==8.32.0
 psycopg2-binary==2.9.10  # use psycopg2 if not using docker
 pydantic==2.10.6
 pydantic_core==2.27.2
