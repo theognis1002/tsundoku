@@ -1,6 +1,5 @@
 import logging
 
-# import groq
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
