@@ -7,15 +7,21 @@ import {
   Paper,
   Typography,
   Divider,
+  IconButton,
+  Collapse,
+  Button,
 } from "@mui/material";
 import { ChapterList } from "../components/ChapterList";
 import { useParams, Link } from "react-router-dom";
 import tsundokuLogo from "../assets/logo.png";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 interface ChapterContent {
   content: string | null;
   summary: string;
   title: string;
+  id: string;
 }
 
 export function Reader() {
@@ -24,6 +30,8 @@ export function Reader() {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const handleChapterSelect = async (chapterId: string) => {
     setIsLoading(true);
@@ -43,6 +51,35 @@ export function Reader() {
       console.error("Error fetching chapter content:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
+
+  const handleSummarize = async () => {
+    if (!chapterContent || isSummarizing) return;
+
+    setIsSummarizing(true);
+    try {
+      const response = await fetch(
+        `http://localhost:${import.meta.env.VITE_PORT}/chapters/${
+          chapterContent.id
+        }/summarize`,
+        { method: "POST" }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setChapterContent((prev) =>
+          prev ? { ...prev, summary: data.summary } : null
+        );
+      }
+    } catch (error) {
+      console.error("Error generating summary:", error);
+    } finally {
+      setIsSummarizing(false);
     }
   };
 
@@ -117,38 +154,120 @@ export function Reader() {
               sx={{
                 p: 4,
                 backgroundColor: "transparent",
-                "& p": { lineHeight: 1.8, fontSize: "1.1rem" },
+                "& p": {
+                  fontFamily: "Helvetica, Arial, sans-serif",
+                },
               }}
             >
               <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
                 {chapterContent.title}
               </Typography>
 
-              {chapterContent.content && (
-                <>
-                  <Typography component="div" sx={{ whiteSpace: "pre-wrap" }}>
-                    {chapterContent.content.split("\n").map(
-                      (paragraph, index) =>
-                        paragraph.trim() && (
-                          <Typography key={index} paragraph>
-                            {paragraph}
-                          </Typography>
-                        )
-                    )}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  cursor: "pointer",
+                  mb: 2,
+                }}
+                onClick={handleExpandClick}
+              >
+                <Typography variant="subtitle2">
+                  {expanded ? "Collapse" : "Expand"}
+                </Typography>
+                <IconButton>
+                  {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+              </Box>
+
+              <Collapse in={expanded}>
+                <Box sx={{ maxWidth: "100%", textAlign: "justify" }}>
+                  {chapterContent.content && (
+                    <>
+                      {expanded ? (
+                        // Full content with paragraphs
+                        chapterContent.content
+                          .split("\n")
+                          .map(
+                            (paragraph, index) =>
+                              paragraph.trim() && (
+                                <Typography key={index}>{paragraph}</Typography>
+                              )
+                          )
+                      ) : (
+                        // Preview of first paragraph
+                        <Typography
+                          sx={{
+                            textIndent: "2em",
+                            mb: 1.5,
+                            textAlign: "justify",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {`${chapterContent.content
+                            .split("\n")[0]
+                            .slice(0, 200)}...`}
+                        </Typography>
+                      )}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          mt: 2,
+                          cursor: "pointer",
+                        }}
+                        onClick={handleExpandClick}
+                      >
+                        <Typography variant="subtitle2" color="primary">
+                          {expanded ? "Show Less" : "Read More"}
+                        </Typography>
+                        <IconButton size="small">
+                          {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                      </Box>
+                    </>
+                  )}
+                </Box>
+              </Collapse>
+
+              <Divider sx={{ my: 4 }} />
+
+              <Box sx={{ backgroundColor: "#f5f5f5", p: 3, borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6" color="primary">
+                    Summary
                   </Typography>
-
-                  <Divider sx={{ my: 4 }} />
-
-                  <Box
-                    sx={{ backgroundColor: "#f5f5f5", p: 3, borderRadius: 1 }}
-                  >
-                    <Typography variant="h6" gutterBottom color="primary">
-                      Summary
-                    </Typography>
-                    <Typography>{chapterContent.summary}</Typography>
-                  </Box>
-                </>
-              )}
+                  {chapterContent?.summary === null && (
+                    <Button
+                      onClick={handleSummarize}
+                      disabled={isSummarizing}
+                      variant="outlined"
+                      size="small"
+                    >
+                      {isSummarizing ? "Generating..." : "Generate Summary"}
+                    </Button>
+                  )}
+                </Box>
+                <Typography>
+                  {isSummarizing ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={20} />
+                      <span>Generating summary...</span>
+                    </Box>
+                  ) : (
+                    chapterContent.summary
+                  )}
+                </Typography>
+              </Box>
             </Paper>
           ) : (
             <Box sx={{ textAlign: "center", mt: 4, color: "text.secondary" }}>

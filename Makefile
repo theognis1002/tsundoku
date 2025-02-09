@@ -1,4 +1,4 @@
-.PHONY: all build run test clean stop migrate db
+.PHONY: all build run test clean stop migrate migrations db
 
 # Create DB container
 run:
@@ -24,7 +24,8 @@ migrate:
 # Create new database migration
 migrations:
 	@echo "Creating new migration..."
-	@docker compose exec backend alembic revision --autogenerate
+	@docker compose exec app alembic init migrations
+	@docker compose exec app alembic revision --autogenerate
 
 # Build the backend
 backend-build:

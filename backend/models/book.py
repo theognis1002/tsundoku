@@ -39,6 +39,7 @@ class Chapter(Base):
     book_id: Mapped[int] = mapped_column(ForeignKey("public.books.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=True)
+    summary: Mapped[str] = mapped_column(Text, nullable=True)
     order: Mapped[int] = mapped_column(nullable=False)  # To maintain chapter order
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow

@@ -38,6 +38,7 @@ def upgrade() -> None:
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("content", sa.Text(), nullable=True),
         sa.Column("order", sa.Integer(), nullable=False),
+        sa.Column("summary", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(

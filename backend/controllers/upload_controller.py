@@ -61,7 +61,50 @@ class UploadController:
         return await asyncio.to_thread(_extract_chapters)
 
     @staticmethod
-    async def save_book_data(filename: str, chapters: list[str], db: Session) -> Book:
+    def extract_chapters(epub_path: Path) -> dict[str, str]:
+        """
+        Extract chapter titles and content from an EPUB file
+
+        Args:
+            epub_path: Path to the EPUB file
+
+        Returns:
+            Dictionary mapping chapter titles to their content
+        """
+        book = epub.read_epub(str(epub_path), {"ignore_ncx": True})
+        chapters: dict[str, str] = {}
+
+        for item in book.get_items():
+            if isinstance(item, epub.EpubHtml):
+                soup = BeautifulSoup(item.get_body_content(), "html.parser")
+
+                # Extract title from headings
+                title = None
+                for heading in soup.find_all(["h1", "h2", "h3"]):
+                    if heading.text.strip():
+                        title = heading.text.strip()
+                        # Remove the heading from the soup so it's not included in content
+                        heading.decompose()
+                        break
+
+                # If no heading found, use item ID as title
+                if not title:
+                    title = item.id
+
+                # Extract and clean content, excluding the title
+                content = soup.get_text().strip()
+
+                # Only add if we have actual content
+                if content:
+                    logger.debug(
+                        f"Extracted chapter '{title}' with {len(content)} characters"
+                    )
+                    chapters[title] = content
+
+        return chapters
+
+    @staticmethod
+    def save_book_data(filename: str, chapters: dict[str, str], db: Session) -> Book:
         """Save book and chapter data to database"""
         book = Book(
             title=filename,
@@ -70,12 +113,14 @@ class UploadController:
         db.add(book)
         db.flush()
 
-        # Create chapter records (titles only)
-        for index, chapter_title in enumerate(chapters):
+        # Create chapter records with content
+        for index, (chapter_title, chapter_content) in enumerate(chapters.items(), 1):
+            print(f"Chapter Length: {len(chapter_content)}")
             chapter = Chapter(
                 book_id=book.id,
                 title=chapter_title,
-                order=index + 1,
+                content=chapter_content,
+                order=index,
             )
             db.add(chapter)
 
@@ -88,14 +133,14 @@ class UploadController:
         cls, file: UploadFile, db: Session
     ) -> tuple[bool, str, str | None, list[str], int | None]:
         """
-        Handle the upload of an EPUB file and extract chapter names
+        Handle the upload of an EPUB file and extract chapter data
 
         Args:
             file: The uploaded file
             db: Database session
 
         Returns:
-            tuple: (success status, filename, optional error message, chapter names, book_id)
+            tuple: (success status, filename, optional error message, chapter titles, book_id)
         """
         try:
             if file.filename is None:
@@ -116,18 +161,18 @@ class UploadController:
 
             # Save the file
             file_path = cls.UPLOAD_DIR / file.filename
-            content = await file.read()
+            content = await file.read()  # Use async read for UploadFile
 
             with open(file_path, "wb") as f:
                 f.write(content)
 
-            # Extract chapter names asynchronously
-            chapters = await cls.extract_chapter_names(file_path)
+            # Extract chapter data
+            chapters = cls.extract_chapters(file_path)
 
             # Save to database
-            book = await cls.save_book_data(file.filename, chapters, db)
+            book = cls.save_book_data(file.filename, chapters, db)
 
-            return True, file.filename, None, chapters, book.id
+            return True, file.filename, None, list(chapters.keys()), book.id
 
         except Exception as e:
             return (

@@ -28,6 +28,7 @@ class ChapterResponse(BaseModel):
 class ChapterContentResponse(BaseModel):
     """Response schema for chapter content"""
 
+    id: int
     content: str | None
-    summary: str
+    summary: str | None
     title: str
