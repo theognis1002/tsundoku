@@ -12,10 +12,17 @@
   padding: 24px;
   text-align: center;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.upload-dropzone:hover {
+.upload-dropzone:hover,
+.dropzone-active {
   background-color: var(--mui-palette-action-hover);
+  border-color: var(--mui-palette-primary-main);
+}
+
+.dropzone-active {
+  border-style: solid;
 }
 
 .upload-icon {

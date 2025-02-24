@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -9,6 +9,7 @@ import {
   LinearProgress,
 } from "@mui/material";
 import { UploadFile, Description } from "@mui/icons-material";
+import { useDropzone } from "react-dropzone";
 import "./UploadForm.css";
 import { useNavigate } from "react-router-dom";
 
@@ -27,23 +28,35 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [fileError, setFileError] = useState<string>("");
   const navigate = useNavigate();
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (
-        selectedFile.type === "application/pdf" ||
-        selectedFile.type === "application/epub+zip"
-      ) {
-        setFile(selectedFile);
-        setUploadStatus("");
-      } else {
-        setUploadStatus("Please select a PDF or EPUB file");
-        setFile(null);
-      }
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    // Clear previous errors
+    setFileError("");
+
+    // Handle rejected files
+    if (rejectedFiles.length > 0) {
+      setFileError("Only EPUB files are supported currently");
+      setFile(null);
+      return;
     }
-  };
+
+    const selectedFile = acceptedFiles[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setUploadStatus("");
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      // "application/pdf": [".pdf"],
+      "application/epub+zip": [".epub"],
+    },
+    multiple: false,
+  });
 
   const handleUpload = async () => {
     if (!file) {
@@ -69,10 +82,6 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
         const data: UploadResponse = await response.json();
         setUploadStatus("File uploaded successfully!");
         setFile(null);
-        const fileInput = document.querySelector(
-          'input[type="file"]'
-        ) as HTMLInputElement;
-        if (fileInput) fileInput.value = "";
         onUploadSuccess?.();
         navigate(`/reader/${data.book_id}`);
       } else {
@@ -93,21 +102,29 @@ export function UploadForm({ onUploadSuccess }: UploadFormProps) {
   return (
     <Paper elevation={3} className="upload-paper">
       <Stack spacing={2}>
-        <Box className="upload-dropzone" component="label">
-          <input
-            type="file"
-            accept=".pdf,.epub"
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
+        <Box
+          {...getRootProps()}
+          className={`upload-dropzone ${
+            isDragActive ? "dropzone-active" : ""
+          } ${fileError ? "dropzone-error" : ""}`}
+        >
+          <input {...getInputProps()} />
           <UploadFile className="upload-icon" />
           <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-            Click to upload or drag and drop
+            {isDragActive
+              ? "Drop the file here"
+              : "Click to upload or drag and drop"}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             PDF or EPUB files only
           </Typography>
         </Box>
+
+        {fileError && (
+          <Alert severity="error" className="status-alert">
+            {fileError}
+          </Alert>
+        )}
 
         {file && (
           <Box className="file-preview">
