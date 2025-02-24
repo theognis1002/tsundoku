@@ -22,8 +22,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 ```bash
 cp .env.sample .env  # Edit the .env file with your own values
-make build && makerun
+make build && make run  # Build database and backend server
+cd frontend && npm install && npm run dev  # Start frontend server
 ```
+
+The `make build` command will build the application and run initial database migrations. If you need to run migrations separately, you can use `make migrate`.
 
 ## Makefile Commands
 
